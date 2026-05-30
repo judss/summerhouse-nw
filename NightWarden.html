@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Night Warden — Summer House KX</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #0f0f1a;
+    --surface2: #13131f;
+    --border: #1e1e30;
+    --gold: #c8a84b;
+    --gold-dim: rgba(200,168,75,0.15);
+    --green: #4caf7d;
+    --green-dim: rgba(76,175,125,0.12);
+    --red: #e05c5c;
+    --text: #ddd8cc;
+    --text-dim: #666;
+    --text-mid: #999;
+    --mono: 'DM Mono', monospace;
+    --serif: 'Playfair Display', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* NAV */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(8,8,16,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex-shrink: 0;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-btn.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* PAGES */
+  .page { display: none; padding: 20px 16px; max-width: 680px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* HEADER */
+  .header {
+    border-left: 3px solid var(--gold);
+    padding-left: 14px;
+    margin-bottom: 24px;
+  }
+  .header-sub { font-size: 10px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 4px; }
+  .header-title { font-family: var(--serif); font-size: 28px; line-height: 1.1; }
+  .header-desc { font-size: 12px; color: var(--text-mid); margin-top: 4px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .card.alert { border-color: rgba(200,168,75,0.3); }
+  .card.done { opacity: 0.45; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface2);
+  }
+  .card.alert .card-header { background: #151200; }
+  .card.done .card-header { background: #0a120a; }
+
+  .card-header-left { display: flex; align-items: center; gap: 10px; }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .dot.partial { background: var(--gold); }
+  .dot.complete { background: var(--green); }
+
+  .card-time { font-size: 10px; letter-spacing: 1px; color: var(--text-dim); }
+  .card.alert .card-time { color: var(--gold); }
+  .card-label { font-size: 13px; font-weight: 500; margin-left: 6px; }
+  .card.done .card-label { color: var(--green); }
+
+  .card-right { display: flex; align-items: center; gap: 8px; }
+  .card-count { font-size: 11px; color: var(--text-dim); }
+  .card-chevron { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; }
+  .card-chevron.open { transform: rotate(180deg); }
+
+  .card-body { background: #0b0b14; }
+  .task-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .task-row:last-child { border-bottom: none; }
+  .task-row:active { background: rgba(255,255,255,0.02); }
+
+  .checkbox {
+    width: 18px; height: 18px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--green);
+    transition: all 0.15s;
+  }
+  .checkbox.checked {
+    border-color: var(--green);
+    background: var(--green-dim);
+  }
+
+  .task-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #c8c4b9;
+    transition: all 0.15s;
+  }
+  .task-text.checked {
+    color: #3a3a3a;
+    text-decoration: line-through;
+  }
+
+  /* PROGRESS */
+  .progress-wrap { margin: 0 0 20px; }
+  .progress-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease, background 0.4s; }
+
+  /* BANNER */
+  .banner {
+    background: #141000;
+    border: 1px solid rgba(200,168,75,0.25);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.2s;
+  }
+  .btn:active { background: var(--surface2); }
+  .btn-gold {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .btn-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+
+  /* REMINDERS */
+  .reminder-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .reminder-item:last-child { border-bottom: none; }
+  .reminder-time {
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 500;
+    flex-shrink: 0;
+    width: 52px;
+  }
+  .reminder-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+  /* INFO SECTIONS */
+  .info-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .info-block h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  /* ROOM TABLE */
+  .room-row {
+    display: flex;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: baseline;
+  }
+  .room-row:last-child { border-bottom: none; }
+  .room-num { font-size: 13px; color: var(--gold); font-weight: 500; width: 80px; flex-shrink: 0; }
+  .room-desc { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .room-tag {
+    font-size: 10px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* CHECKIN STEPS */
+  .step-row {
+    display: flex;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .step-row:last-child { border-bottom: none; }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 1px solid rgba(200,168,75,0.3);
+    color: var(--gold);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .step-text strong { color: var(--gold); font-weight: 500; }
+
+  /* MESSAGE BOX */
+  .msg-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 12px;
+    white-space: pre-line;
+  }
+  .msg-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+
+  /* COMPLETE */
+  .complete-banner {
+    text-align: center;
+    padding: 24px;
+    color: var(--green);
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* FACILITIES */
+  .facility-row {
+    display: flex;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .facility-row:last-child { border-bottom: none; }
+  .facility-name { font-size: 13px; color: var(--gold); width: 110px; flex-shrink: 0; }
+  .facility-desc { font-size: 13px; color: var(--text); line-height: 1.4; }
+
+  /* FIRE */
+  .fire-step {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+  .fire-step:last-child { border-bottom: none; }
+  .fire-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(224,92,92,0.15);
+    border: 1px solid rgba(224,92,92,0.3);
+    color: var(--red);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .fire-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+  .tag-red {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--red);
+    border: 1px solid rgba(224,92,92,0.3);
+    border-radius: 3px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('checklist')">Checklist</button>
+  <button class="nav-btn" onclick="showPage('shift')">Shift Start</button>
+  <button class="nav-btn" onclick="showPage('checkin')">Check In</button>
+  <button class="nav-btn" onclick="showPage('rooms')">Rooms</button>
+  <button class="nav-btn" onclick="showPage('messages')">Messages</button>
+  <button class="nav-btn" onclick="showPage('fire')">Fire</button>
+</nav>
+
+<!-- CHECKLIST PAGE -->
+<div id="page-checklist" class="page active">
+  <div class="header">
+    <div class="header-sub">Summer House Kings Cross</div>
+    <div class="header-title">Night Warden</div>
+    <div class="header-desc">Full Shift Checklist</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="progress-text">0 / 0 tasks</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="banner">🔁 Check kitchen hourly throughout the entire shift</div>
+
+  <div class="btn-row">
+    <button class="btn btn-gold" onclick="resetChecklist()">Reset Shift</button>
+    <button class="btn" onclick="collapseAll()">Collapse All</button>
+    <button class="btn" onclick="expandAll()">Expand All</button>
+  </div>
+
+  <div id="checklist-container"></div>
+</div>
+
+<!-- SHIFT START PAGE -->
+<div id="page-shift" class="page">
+  <div class="header">
+    <div class="header-sub">On Arrival</div>
+    <div class="header-title">Shift Start</div>
+    <div class="header-desc">Do these first</div>
+  </div>
+
+  <div class="info-block">
+    <h3>Arrival Tasks</h3>
+    <div class="step-row"><div class="step-num">1</div><div class="step-text">Collect <strong>night warden key and name badge</strong></div></div>
+    <div class="step-row"><div class="step-num">2</div><div class="step-text">Connect phone</div></div>
+    <div class="step-row"><div class="step-num">3</div><div class="step-text">Start laundry</div></div>
+    <div class="step-row"><div class="step-num">4</div><div class="step-text">Read the <strong>Night Warden Report</strong></div></div>
+  </div>
+
+  <div class="info-block">
+    <h3>Tonight's Reminders</h3>
+    <div class="reminder-item"><div class="reminder-time">21:45</div><div class="reminder-text">Send courtyard closing WhatsApp message</div></div>
+    <div class="reminder-item"><div class="reminder-time">22:00</div><div class="reminder-text">⚠️ Close & lock courtyard</div></div>
+    <div class="reminder-item"><div class="reminder-time">00:00</div><div class="reminder-text">⚠️ Close kitchen (23:00 if deep clean night)</div></div>
+    <div class="reminder-item"><div class="reminder-time">02:00</div><div class="reminder-text">Photos of Harry Potter cupboard, cleaning supplies cupboard & hoover → Slack</div></div>
+    <div class="reminder-item"><div class="reminder-time">02:00</div><div class="reminder-text">Lost property photo → WhatsApp. Keys & badge at reception.</div></div>
+  </div>
+
+  <div class="banner">First task: <strong>20:05 — Kitchen light clean</strong></div>
+</div>
+
+<!-- CHECK IN PAGE -->
+<div id="page-checkin" class="page">
+  <div class="header">
+    <div class="header-sub">Guest Arrival</div>
+    <div class="header-title">Check In</div>
+    <div class="header-desc">Follow these steps in order</div>
+  </div>
+
+  <div class="info-block">
+    <h3>Process</h3>
+    <div class="step-row"><div class="step-num">1</div><div class="step-text">Let them in → bring to reception → find name on computer</div></div>
+    <div class="step-row"><div class="step-num">2</div><div class="step-text">Ask for <strong>passport</strong> (Australians can use Australian ID) — <strong>no ID = no check-in</strong></div></div>
+    <div class="step-row"><div class="step-num">3</div><div class="step-text">Ask them to fill out the form on their phone</div></div>
+    <div class="step-row"><div class="step-num">4</div><div class="step-text">Refresh until form is submitted</div></div>
+    <div class="step-row"><div class="step-num">5</div><div class="step-text"><strong>Check passport matches the photo on the form</strong></div></div>
+    <div class="step-row"><div class="step-num">6</div><div class="step-text">Paid online → return passport | Not paid → <strong>keep passport at reception until morning</strong></div></div>
+    <div class="step-row"><div class="step-num">7</div><div class="step-text">Give room key + lanyard</div></div>
+    <div class="step-row"><div class="step-num">8</div><div class="step-text">Offer <strong>towel rental $2 + $5 deposit</strong> | Padlocks <strong>$5</strong></div></div>
+    <div class="step-row"><div class="step-num">9</div><div class="step-text">Tell them about the hostel, events & group chat</div></div>
+    <div class="step-row"><div class="step-num">10</div><div class="step-text">Tell them where their room is (see Rooms tab)</div></div>
+  </div>
+
+  <div class="info-block">
+    <h3>Walk-in Booking</h3>
+    <div class="step-text" style="line-height:1.7">Add name to night report → take deposit & passport → find room number on system → proceed with normal check-in</div>
+  </div>
+</div>
+
+<!-- ROOMS PAGE -->
+<div id="page-rooms" class="page">
+  <div class="header">
+    <div class="header-sub">Layout</div>
+    <div class="header-title">Rooms</div>
+    <div class="header-desc">Tap a floor to expand</div>
+  </div>
+
+  <div class="info-block">
+    <h3>Room Layout</h3>
+    <div class="room-row"><div class="room-num">Rooms 1–6</div><div class="room-desc">Ground floor — through and past the kitchen. Bathroom on this floor.</div></div>
+    <div class="room-row"><div class="room-num">Room 6</div><div class="room-desc">Middle floor 1 <span class="room-tag">en-suite</span></div></div>
+    <div class="room-row"><div class="room-num">Rooms 7–12, 14</div><div class="room-desc">Middle floor 2 — up the stairs out of reception. Bathroom on this floor. <span class="room-tag">no room 13</span></div></div>
+    <div class="room-row"><div class="room-num">Rooms 15–20</div><div class="room-desc">Top floor. Bathroom on this floor.</div></div>
+    <div class="room-row"><div class="room-num">Room 21</div><div class="room-desc">Attic — large female dorm.</div></div>
+  </div>
+
+  <div class="info-block">
+    <h3>Facilities</h3>
+    <div class="facility-row"><div class="facility-name">Kitchen</div><div class="facility-desc">Out of reception, turn right. Closes midnight.</div></div>
+    <div class="facility-row"><div class="facility-name">Fridges & food</div><div class="facility-desc">Straight through the kitchen, outside the TV room (near rooms 1–6).</div></div>
+    <div class="facility-row"><div class="facility-name">TV Room</div><div class="facility-desc">Through and past the kitchen on the right. Open 24/7.</div></div>
+    <div class="facility-row"><div class="facility-name">Courtyard</div><div class="facility-desc">Right of reception desk (just before the kitchen). Open until 22:00.</div></div>
+    <div class="facility-row"><div class="facility-name">Bathrooms</div><div class="facility-desc">On every floor, open to all guests — use any floor if yours is busy.</div></div>
+  </div>
+</div>
+
+<!-- MESSAGES PAGE -->
+<div id="page-messages" class="page">
+  <div class="header">
+    <div class="header-sub">WhatsApp Templates</div>
+    <div class="header-title">Messages</div>
+    <div class="header-desc">Copy and send at the right time</div>
+  </div>
+
+  <div class="msg-label">21:45 — Courtyard Closing</div>
+  <div class="msg-box">⚠️Quiet time ⚠️
+
+Dear Guests, it is almost 10:00pm which means the courtyard will be closing and we will be heading into our quiet time.
+Please no hanging out in the hallways and no gathering outside the property or nearby alleyways.
+
+Thank you.</div>
+
+  <div class="msg-label" style="margin-top:20px">~02:00 — Lost Property</div>
+  <div class="msg-box">📢 Lost Property
+
+Hi Guests, the following item(s) were found and are being held at reception. If any of these belong to you please come and collect them during the day.
+
+Thank you. 🙂</div>
+  <div style="font-size:11px; color: var(--text-dim); margin-top:-4px">Remember to attach a photo of the lost item(s)</div>
+</div>
+
+<!-- FIRE PAGE -->
+<div id="page-fire" class="page">
+  <div class="header">
+    <div class="header-sub">Emergency</div>
+    <div class="header-title">Fire Procedure</div>
+    <div class="header-desc" style="color: var(--red)">Follow immediately</div>
+  </div>
+
+  <div class="info-block" style="border-color: rgba(224,92,92,0.3)">
+    <h3 style="color: var(--red)">Steps</h3>
+    <div class="fire-step"><div class="fire-num">1</div><div class="fire-text">Knock on <strong>every door</strong> — ensure all guests evacuate</div></div>
+    <div class="fire-step"><div class="fire-num">2</div><div class="fire-text">Close all <strong>fire doors</strong> and take the <strong>wedges</strong> with you</div></div>
+    <div class="fire-step"><div class="fire-num">3</div><div class="fire-text">Make sure everyone waits on the <strong>other side of the road</strong></div></div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const SECTIONS = [
+  { id: "arrival", time: "On Arrival", label: null, alert: false, tasks: [
+    "Night warden key and name badge",
+    "Phone connected",
+    "Laundry started",
+    "Night Warden Report read",
+  ]},
+  { id: "kitchen-light", time: "20:05–20:30", label: "Kitchen Light Clean", alert: false, tasks: [
+    "Check/restock tea towels, coffee, tea, sugar",
+    "Wipe fridge doors, collect loose items → bag → leave at reception",
+    "Hang up any food bags left on floor",
+    "Replace dishwashing sponges if needed",
+    "Wipe all kitchen surfaces",
+    "Change bins",
+    "Put dishes away (lots = notify management)",
+  ]},
+  { id: "bathrooms-deep", time: "20:30–21:15", label: "Bathrooms Deep Clean", alert: false, tasks: [
+    "Wipe doors, handles, sinks, pipes & outside of toilet with lemon disinfectant",
+    "Clean inside toilet with black brush + bleach under rim",
+    "Shower tiles: wet surfaces, apply mould killer, wait 5 mins, wipe down",
+    "Clean walls & ceiling for mould/marks",
+    "Remove hair from shower & sink drains",
+    "Wet wipe fans/vents, floor behind toilet, bin, corners & edges",
+    "Window cleaner on mirrors & shower glass",
+    "Remove rubbish, wipe bin & lid",
+    "Mop with hot water & lemon disinfectant (dreadlock mop), dry with green mop",
+    "Move bin & toilet brush to mop behind them",
+    "Refill toilet paper, hand soap, check bref cube & spray air freshener",
+  ]},
+  { id: "vacuum", time: "21:15–21:30", label: "Vacuum", alert: false, tasks: [
+    "Top floor hall", "Middle floor hall", "Stairs",
+  ]},
+  { id: "reception", time: "21:30–22:00", label: "Clean Reception", alert: false, tasks: [
+    "Wipe ALL black surfaces (desk, countertop, computers, CCTV, stereo, printer, Summer Travel desk, mailbox area)",
+    "Replace bin liner, wipe bin & lid, spray cockroach spray behind bin",
+    "Wipe sockets, frames, signs, top of cleaning cupboard (use ladder)",
+    "Wipe all windows & windowsills (including courtyard door)",
+    "Vacuum all corners including under desk, spray cockroach spray, then air freshener",
+    "Mop with hot water and bleach, dry mop",
+  ]},
+  { id: "whatsapp", time: "21:45", label: "⚠️ Send Courtyard Closing WhatsApp", alert: true, tasks: [
+    "Send closing message to guest WhatsApp group",
+  ]},
+  { id: "courtyard-close", time: "22:00", label: "⚠️ Close & Lock Courtyard", alert: true, tasks: [
+    "Tell guests to leave", "Lock the gate",
+  ]},
+  { id: "courtyard-clean", time: "22:00+", label: "Clean Courtyard", alert: false, tasks: [
+    "Empty & wash ashtrays with dish soap and hot water",
+    "Clean & wipe all seating, table tops & underneath tables/benches",
+    "Wipe white windowsills (TV room + 2 kitchen windows)",
+    "Wipe white walls from ground up (ladder if needed)",
+    "Gumption on metal sponge for brown grime on grey wood planks",
+    "Clear leaves from decking & pick out of white rocks",
+    "Change bin liners, wipe bins inside & outside",
+    "Clean dryer filters, remove all lint",
+    "Turn off courtyard lights",
+  ]},
+  { id: "extra", time: "23:00", label: "Extra Tasks", alert: false, tasks: [
+    "Check Night Warden Report for tonight's specific tasks",
+    "If deep clean night → kitchen already closed at 23:00 ✅",
+  ]},
+  { id: "kitchen-deep", time: "00:00–00:45", label: "Kitchen Deep Clean", alert: false, tasks: [
+    "⚠️ Close kitchen (if not already closed)",
+    "Clean & store any dishes left out (lots = leave note for reception)",
+    "Wipe sinks with lemon disinfectant, pour vinegar down drains",
+    "Clean all walls from ground up (metal sponge + gumption on tile stains)",
+    "Pull benches out, steam all tiles and grout in between",
+    "Remove & clean black stove grills, clean stove surface, put grills back",
+    "Remove everything off shelves, clean shelves & black trays, put back neatly",
+    "Clean all bins with soapy water + lemon disinfectant inside & outside",
+    "Clean windows, frames, drains, fan, under sink, pipes & cutlery holders",
+    "Wipe all surfaces including microwave (inside, sides & top)",
+    "Clean tea towel boxes, replace with clean ones",
+    "Use lemon disinfectant + steamer on kitchen stairs, rubber & metal",
+    "Wipe down kettle & toaster (shake crumbs into bin)",
+    "Pull side benches out, vacuum under and against walls",
+    "Vacuum then mop floor (don't vacuum a wet surface)",
+  ]},
+  { id: "bathrooms-light", time: "00:45–01:15", label: "Bathrooms Light Clean", alert: false, tasks: [
+    "Refill toilet paper & hand soap",
+    "Clean inside toilet with black brush",
+    "Mop floor with hot water & bleach, dry afterwards",
+    "Wipe door, handles, sinks, pipes & outside of toilet (don't forget behind)",
+  ]},
+  { id: "tv-room", time: "01:15–01:45", label: "TV Room", alert: false, tasks: [
+    "Collect & wash dishes, bin any rubbish",
+    "Empty & replace bins (wipe outside if needed)",
+    "Clean table & seats",
+    "Vacuum seating area & floor",
+    "Tidy pillows, games & bookshelf",
+    "By 02:00 → kindly ask any remaining guests to go to bed",
+  ]},
+  { id: "mop", time: "01:45–02:00", label: "Mop Ground Floor", alert: false, tasks: [
+    "TV room", "Room 3 hall", "Fridge area", "Kitchen", "Entry hall",
+  ]},
+  { id: "close", time: "02:00", label: "⚠️ Close", alert: true, tasks: [
+    "Take photos of Harry Potter cupboard, cleaning supplies cupboard & inside the hoover → send to Slack",
+    "Take photo of any lost property & send WhatsApp message to guests",
+    "Put all equipment away neatly",
+    "Leave keys & name badge at reception",
+  ]},
+];
+
+const STORAGE_KEY = "nw_checklist_v1";
+const COLLAPSE_KEY = "nw_collapse_v1";
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+function loadChecked() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  const state = {};
+  SECTIONS.forEach(s => { state[s.id] = s.tasks.map(() => false); });
+  return state;
+}
+
+function saveChecked(state) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadCollapsed() {
+  try {
+    const saved = localStorage.getItem(COLLAPSE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return {};
+}
+
+function saveCollapsed(state) {
+  try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+let checked = loadChecked();
+let collapsed = loadCollapsed();
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  const container = document.getElementById("checklist-container");
+  container.innerHTML = "";
+
+  let total = 0, done = 0;
+  SECTIONS.forEach(s => { total += s.tasks.length; done += checked[s.id].filter(Boolean).length; });
+
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  document.getElementById("progress-text").textContent = `${done} / ${total} tasks`;
+  document.getElementById("progress-pct").textContent = `${pct}%`;
+  const fill = document.getElementById("progress-fill");
+  fill.style.width = pct + "%";
+  fill.style.background = pct === 100 ? "#4caf7d" : "#c8a84b";
+
+  SECTIONS.forEach(s => {
+    const checks = checked[s.id];
+    const allDone = checks.every(Boolean);
+    const someDone = checks.some(Boolean);
+    const isCollapsed = collapsed[s.id];
+
+    const card = document.createElement("div");
+    card.className = "card" + (s.alert ? " alert" : "") + (allDone ? " done" : "");
+
+    // Header
+    const header = document.createElement("div");
+    header.className = "card-header";
+    header.innerHTML = `
+      <div class="card-header-left">
+        <div class="dot ${allDone ? "complete" : someDone ? "partial" : ""}"></div>
+        <div>
+          <span class="card-time">${s.time}</span>
+          ${s.label ? `<span class="card-label">${s.label}</span>` : ""}
+        </div>
+      </div>
+      <div class="card-right">
+        <span class="card-count">${checks.filter(Boolean).length}/${s.tasks.length}</span>
+        <span class="card-chevron ${isCollapsed ? "" : "open"}">▲</span>
+      </div>
+    `;
+    header.addEventListener("click", () => {
+      collapsed[s.id] = !collapsed[s.id];
+      saveCollapsed(collapsed);
+      render();
+    });
+    card.appendChild(header);
+
+    // Body
+    if (!isCollapsed) {
+      const body = document.createElement("div");
+      body.className = "card-body";
+      s.tasks.forEach((task, idx) => {
+        const row = document.createElement("div");
+        row.className = "task-row";
+        row.innerHTML = `
+          <div class="checkbox ${checks[idx] ? "checked" : ""}">${checks[idx] ? "✓" : ""}</div>
+          <span class="task-text ${checks[idx] ? "checked" : ""}">${task}</span>
+        `;
+        row.addEventListener("click", () => {
+          checked[s.id][idx] = !checked[s.id][idx];
+          saveChecked(checked);
+          render();
+        });
+        body.appendChild(row);
+      });
+      card.appendChild(body);
+    }
+
+    container.appendChild(card);
+  });
+
+  if (pct === 100) {
+    const banner = document.createElement("div");
+    banner.className = "complete-banner";
+    banner.textContent = "✓ Shift Complete — Good work!";
+    container.appendChild(banner);
+  }
+}
+
+// ─── CONTROLS ────────────────────────────────────────────────────────────────
+function resetChecklist() {
+  if (!confirm("Reset all tasks for a new shift?")) return;
+  SECTIONS.forEach(s => { checked[s.id] = s.tasks.map(() => false); });
+  saveChecked(checked);
+  collapsed = {};
+  saveCollapsed(collapsed);
+  render();
+}
+
+function collapseAll() {
+  SECTIONS.forEach(s => { collapsed[s.id] = true; });
+  saveCollapsed(collapsed);
+  render();
+}
+
+function expandAll() {
+  SECTIONS.forEach(s => { collapsed[s.id] = false; });
+  saveCollapsed(collapsed);
+  render();
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + id).classList.add("active");
+  event.currentTarget.classList.add("active");
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
