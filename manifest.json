@@ -1,7 +1,7 @@
 {
   "name": "Night Warden",
   "short_name": "Night Warden",
-  "description": "Summer House Kings Cross — Night Warden Shift Assistant",
+  "description": "Night Warden Shift Assistant",
   "start_url": "/summerhouse-nw/",
   "display": "standalone",
   "background_color": "#080810",
