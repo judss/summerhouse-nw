@@ -294,6 +294,25 @@
   }
   .msg-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
 
+  .msg-wrap { position: relative; margin-bottom: 12px; }
+  .msg-wrap .msg-box { margin-bottom: 0; }
+  .msg-copy {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1;
+    padding: 4px 6px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .msg-copy:hover { color: var(--gold); border-color: var(--gold); }
+  .msg-copy.copied { color: var(--green); border-color: var(--green); }
+
   /* COMPLETE */
   .complete-banner {
     text-align: center;

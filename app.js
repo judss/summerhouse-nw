@@ -241,6 +241,16 @@ function showPage(id) {
   event.currentTarget.classList.add("active");
 }
 
+// ─── COPY MESSAGE ────────────────────────────────────────────────────────────
+function copyMsg(btn) {
+  const text = btn.previousElementSibling.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.textContent = '✓';
+    setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⎘'; }, 2000);
+  });
+}
+
 // ─── INIT ────────────────────────────────────────────────────────────────────
 render();
 
