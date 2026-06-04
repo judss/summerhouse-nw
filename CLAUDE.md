@@ -13,23 +13,25 @@ A Progressive Web App (PWA) shift assistant for Night Wardens at Summer House ho
 ## Project structure
 
 ```
-index.html     — entire app (HTML structure, CSS, JS data + logic all in one file)
+index.html     — HTML structure and page content only
+style.css      — all styles and CSS custom properties
+app.js         — all task data, state, rendering logic
 manifest.json  — PWA metadata and icon references
 icon-192.png   — PWA icon (small)
 icon-512.png   — PWA icon (large)
 ```
 
-## Key locations within index.html
+## Key locations
 
 | What | Location |
 |---|---|
-| CSS custom properties (colour palette) | `index.html:15–30` |
-| All task data (`SECTIONS` array) | `index.html:537–641` |
-| localStorage keys | `index.html:643–644` |
-| State management (`checked`, `collapsed`) | `index.html:673–674` |
-| Full render function | `index.html:677–753` |
-| Nav routing (`showPage`) | `index.html:778–783` |
-| Service worker registration | `index.html:789–793` |
+| CSS custom properties (colour palette) | `style.css:1–16` |
+| All task data (`SECTIONS` array) | `app.js:2–107` |
+| localStorage keys | `app.js:108–109` |
+| State management (`checked`, `collapsed`) | `app.js:138–139` |
+| Full render function | `app.js:142–218` |
+| Nav routing (`showPage`) | `app.js:243–249` |
+| Service worker registration | `app.js:254–258` |
 
 ## Adding New Features or Fixing Bugs
 
@@ -39,7 +41,7 @@ icon-512.png   — PWA icon (large)
 
 ## Build / deploy
 
-No build step. Edit `index.html`, commit, push to `main` — GitHub Pages redeploys.
+No build step. Edit files, commit, push to `main` — GitHub Pages redeploys.
 
 ```bash
 # Preview locally (avoid opening index.html directly — PWA paths may differ)
